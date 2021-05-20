@@ -1,6 +1,6 @@
 ---
-title: "My answers"
-author: "My name"
+title: "My answers to Lab 5"
+author: "Sara Manders"
 date: '`r format(Sys.time(), "%d %B, %Y")`'
 output: html_document
 ---
@@ -109,14 +109,21 @@ This exercise is going to use the VADER lexicon to evaluate the sentiment of hot
 After you have loaded the data, add a column `id` that creates a unique id to each row of the data.
 
 ```{r}
-# Write your answer here
+hotel_reviews <- read_csv("data/reviews.csv") %>%
+    rownames_to_column("id")
+
+glimpse(hotel_reviews)
 ```
 
 
 3. Create a smaller dataset called `hotel_sentiment` that only includes the columns `id`, `polarity`, and `text`.
 
 ```{r}
-# Write your answer here
+
+hotel_sentiment <- hotel_reviews %>%
+  select(id, polarity, text)
+
+
 ```
 
 
@@ -131,7 +138,7 @@ Adapt the code to run on the `hotel_sentiment` data set.
 ```{r, eval=FALSE}
 # VADER is pretty nice in that we shouldn't need to clean it
 vader_sent <-
-  vader_df(DATANAME$TEXTCOLUMN)
+  vader_df(hotel_sentiment$text)
 ```
 
 NOTE: Note that when you run it, it might take a while to run from start to finish.
