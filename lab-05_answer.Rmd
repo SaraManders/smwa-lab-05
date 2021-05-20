@@ -343,7 +343,14 @@ For each review, count the number of times a word occurs in it.
 Leave the data in it's 'long' format.
 
 ```{r}
-# Write your answer here
+
+
+tidy_reviews_count <- tidy_reviews %>%
+  group_by(id, word) %>%
+  count() %>%
+  ungroup()
+
+View(tidy_reviews_count)
 ```
 
 
@@ -358,7 +365,10 @@ reviews_dtm <-
 ```
 
 ```{r}
-# Write your answer here
+reviews_dtm <- 
+    tidy_reviews_count %>%
+    cast_sparse(id, word, n)
+
 ```
 
 
@@ -367,7 +377,7 @@ Let's get started.
 
 4. What is a topic model? Intuitively how does it work?
 
-**Write your answer here**
+Topic modelings is a method for unsupervised classification of documents, such as blog posts or news articles, similar to clustering on numeric data, to find natural groups so we can understand them separately.
 
 5. We will estimate a topic model using the `stm package`.
 You need to pass the `stm` function the document term matrix from (3) and the number of topics you want the model to identify (called $K$).
@@ -386,7 +396,12 @@ NOTE: When you run the code, it may take a little while to come up with a final 
 
 
 ```{r}
-# Write your answer here
+reviews_lda <-
+  stm(reviews_dtm,
+      K = 10,
+      # seed fixes the random number draw
+      # so we should all get the same results
+      seed = 123456789)
 ```
 
 
@@ -396,7 +411,11 @@ Now that we have results, we want to look at the results and see what topics the
 Do these topics seem distinct **and** managerially relevant?
 
 ```{r}
-# Write your answer here
+?labelTopics
+labelTopics(reviews_lda)
+
+# These don't yet seem distinct nor managerialy relevant, they're quite messy and equal. No real topic can yet be defined.
+
 ```
 
 
@@ -408,7 +427,16 @@ If so, write them down.^[
 ]
 Which of the word lists did you find most helpful when trying to assign a name to each topic?
 
-**Write your answer here**
+Topic 1: Breakfast/food included
+Topic 2: Luxuriousness
+Topic 3: Room look/hygiene
+Topic 4: Personnel/service
+Topic 5: Bathroom/shower
+Topic 6: Location
+Topic 7: Style of the hotel
+Topic 8: Service desk/reception
+Topic 9: Bridal suite/Weddings
+Topic 10: Bed
 
 Our final step will be to assign each review one if the topics we found above.^[
   Topic models generally assign a probability to a review belonging to each topic.
@@ -433,7 +461,17 @@ reviews_gamma <-
 You will want to use the `inner_join()` function.
 
 ```{r}
-# Write your answer here
+?inner_join
+
+hotel_topics <- tidy_reviews %>%
+  mutate(id = as.character(id))%>%
+  inner_join(reviews_gamma, by = "id") 
+
+
+hotel_topics <- hotel_topics %>%
+  select(-topic.y) %>%
+  rename(topic = topic.x)
+
 ```
 
 
@@ -446,23 +484,38 @@ Your answer to (7) created topic labels which will be nicer to data visualizatio
 hotel_topics <-
   hotel_topics %>%
   mutate(topic = case_when(
-    topic == 1 ~ "LABEL 1",
-    topic == 2 ~ "LABEL 2",
-    topic == 3 ~ "LABEL 3",
-    topic == 4 ~ "LABEL 4",
-    topic == 5 ~ "LABEL 5",
-    topic == 6 ~ "LABEL 6",
-    topic == 7 ~ "LABEL 7",
-    topic == 8 ~ "LABEL 8",
-    topic == 9 ~ "LABEL 9",
+    topic == 1 ~ "Breakfast",
+    topic == 2 ~ "Luxury",
+    topic == 3 ~ "Room",
+    topic == 4 ~ "Service",
+    topic == 5 ~ "Bathroom",
+    topic == 6 ~ "Location",
+    topic == 7 ~ "Experience",
+    topic == 8 ~ "Reception",
+    topic == 9 ~ "Events",
     # final case always uses this odd TRUE ~ notation
-    TRUE ~ "LABEL 10"
+    TRUE ~ "Beds"
     )
   )
 ```
 
 ```{r}
-# Write your answer here
+hotel_topics <-
+  hotel_topics %>%
+  mutate(topic = case_when(
+    topic == 1 ~ "Breakfast",
+    topic == 2 ~ "Luxury",
+    topic == 3 ~ "Room",
+    topic == 4 ~ "Service",
+    topic == 5 ~ "Bathroom",
+    topic == 6 ~ "Location",
+    topic == 7 ~ "Experience",
+    topic == 8 ~ "Reception",
+    topic == 9 ~ "Events",
+    # final case always uses this odd TRUE ~ notation
+    TRUE ~ "Beds"
+    )
+  )
 ```
 
 
@@ -472,13 +525,29 @@ HINT: Your final plot should look resemble this one:
 
 
 ```{r}
-# Write your answer here
+
+topics_pol <- hotel_topics %>%
+  group_by(polarity, topic) %>%
+  count()
+
+topic_grph <- topics_pol %>%
+  ggplot(aes(x = polarity,
+             y = n)) +
+  geom_col() +
+  facet_wrap(~ topic) +
+  theme_bw()
+
+topic_grph
 ```
 
 
 11. Create a plot that visualizes whether fake/deceptive reviews discuss different topics than truthful ones. Discuss your findings and emphasize any managerial implications regarding detecting fake reviews.
 
 ```{r}
-# Write your answer here
+
+
+
+
+
 ```
 
