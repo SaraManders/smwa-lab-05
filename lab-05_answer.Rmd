@@ -144,7 +144,9 @@ vader_sent <-
 NOTE: Note that when you run it, it might take a while to run from start to finish.
 
 ```{r}
-# Write your answer here
+
+View(vader_sent)
+
 ```
 
 
@@ -155,7 +157,7 @@ The main column of interest is `compound` which computes the sentiment of a text
 The code below uses the compound score to classify a review as positive or negative.
 To run it, change `eval=FALSE` to `eval = TRUE` in the Rmd file.
 
-```{r, eval = FALSE}
+```{r, eval = TRUE}
 vader_sent2 <- 
   vader_sent %>%
   # we need a row number to merge it back into 
@@ -179,7 +181,13 @@ Use the following code to get started:
 
 
 ```{r}
-# Write your answer here
+
+hotel_sentiment2 <- hotel_sentiment %>%
+  mutate(id = as.integer(id)) %>%
+  inner_join(vader_sent2, by = "id") %>%
+  select(-vader_class.y) %>%
+  rename(vader_class = vader_class.x)
+
 ```
 
 
@@ -194,11 +202,47 @@ Let's compare the VADER sentiment classification to this measure to see how well
 (d) Evaluate VADER's accuracy relative to `polarity` using a confusion matrix (`accuracy()` in R).
 (e) Explain the results
 
+
+(a) Explain what a confusion matrix is.
+A confusion matrix is a table often used to describe the performance of a classification model on a set of test data for which the true values are known. 
+
+(b) Evaluate VADER's predictions relative to `polarity` using a confusion matrix (`conf_mat()` in R).
+
 ```{r}
-# Write your code here
+?conf_mat
+
+hotel_sentiment2 <- hotel_sentiment2 %>%
+  mutate(polarity = as.factor(polarity),
+         vader_class = as.factor(vader_class))
+
+conf_matrix <- conf_mat(hotel_sentiment, polarity, vader_class)
+tidy(conf_matrix)
+print(conf_matrix)
+
 ```
 
-**Write your written answer here**
+(c) Explain what model accuracy is.
+
+Model accuracy measures how close the estimated values are to the actual observed or 'TRUE' values are.
+
+(d) Evaluate VADER's accuracy relative to `polarity` using a confusion matrix (`accuracy()` in R).
+
+```{r}
+?accuracy
+
+glimpse(hotel_sentiment2)
+
+acc_model <- accuracy(hotel_sentiment2, polarity, vader_class, na_rm = TRUE)
+print(acc_model)
+
+```
+
+(e) Explain the results
+
+The accuracy is equal to 0.73 which means the estimated model is about 73% accurate compared to the observed actual (true) values, which is reasonably high but not as high as hoped.
+The confusion  matrix explains this somewhat since there is a big difference in the predicted positive sentiments and the true positive sentiments.
+The truth is for 797 tweets to have been written in positive sentiment, while the prediction says 1219 positive messages have been posted, which is quite a large overestimation of the amount of positive tweets.
+
 
 7. The authors of the VADER lexicon advocate for using three classes for prediction - positive, negative and **neutral**. 
 Their suggestion is to classify text into these three classes as follows: 
@@ -210,7 +254,23 @@ Their suggestion is to classify text into these three classes as follows:
 Update the provided code above to implement this three class classification. (You should not need to re-run the `vader_df()` command to do this)
 
 ```{r}
-# Write your answer here
+
+vader_sent3 <- 
+    vader_sent %>%
+  rowid_to_column("id")%>%
+  filter(word_scores!="ERROR") %>%
+  mutate(vader_class = case_when(
+    compound < -0.05 ~ "negative",
+    compound > 0.05 ~ "positive",
+    TRUE ~ "neutral"
+  )
+)
+
+hotel_sentiment3 <-
+    hotel_sentiment %>%
+  mutate(id = as.integer(id))%>%
+  inner_join(vader_sent3, by = "id")
+
 ```
 
 
@@ -218,14 +278,33 @@ Update the provided code above to implement this three class classification. (Yo
 Does the plot suggest that adding a neutral class provides an improvement in this example?
 
 ```{r}
-# Write your answer here
+
+hotel_sentiment3 <- hotel_sentiment3 %>%
+  select(-text.y) %>%
+  rename(text = text.x)
+
+ratio <-  hotel_sentiment3 %>%
+  group_by(vader_class) %>%
+  count() %>%
+  ungroup()
+
+freq_grph <- ratio %>%
+  ggplot(aes(x = vader_class,
+             y = n,
+             fill = vader_class)) +
+  geom_col() +
+  theme_bw()
+
+print(freq_grph)
+
 ```
 
 
 9. Based on the performance we see here, would you recommend using VADER to classify hotel reviews as positive or negative if you were a marketing analyst for a hotel chain? 
 Why or why not? If not, what might you do instead?
 
-**Write your answer here**
+No, because the accuracy was too low. What could be done is try other sentiment analysis tools such as SentiWordNet, LIWC, ANEW, the General Inquirer or preferrably, Machine Learning to see if any of these predict the model more accurately.
+If none of these models do better, I would suggest using VADER after all.
 
 10. (Optional) The reading for this week, Text Mining with R, uses different sentiment lexicons to classify texts.
 Try one or more of these out on this text, and evaluate their performance. 
@@ -251,7 +330,9 @@ Use this data as your starting point.^[
 1. Load the data from `data/tidy_reviews.csv` into R.
 
 ```{r}
-# Write your answer here
+
+tidy_reviews <- read_csv("data/tidy_reviews.csv")
+
 ```
 
 
